@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>رفيق | مساعد بلدية مدار</title>
+<style>
+:root{
+  --bg:#f3f6f5; --surface:#ffffff; --ink:#14201d; --muted:#5a6a65; --line:#d3ded9;
+  --brand:#0f5a4d; --brand-ink:#ffffff; --user:#dcece7;
+  --warn:#8a5206; --warn-bg:#fcf2dc; --err:#9c2227; --err-bg:#fcebea;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1614; --surface:#16201d; --ink:#e6eeeb; --muted:#9bafa8; --line:#293733;
+    --brand:#3fb59f; --brand-ink:#052a23; --user:#1d3832;
+    --warn:#f0b45a; --warn-bg:#2b2311; --err:#ff9fa3; --err-bg:#391a1c;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Noto Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  font-size:16px; line-height:1.65;
+}
+.app{display:flex; flex-direction:column; height:100dvh; max-width:760px; margin:0 auto; padding:0 16px}
+header{padding:18px 0 10px; border-bottom:1px solid var(--line)}
+.top{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+h1{margin:0; font-size:1.7rem; font-weight:700; color:var(--brand); letter-spacing:0}
+header p{margin:2px 0 0; color:var(--muted); font-size:.95rem}
+details{margin-top:10px; font-size:.9rem}
+summary{cursor:pointer; color:var(--muted); width:max-content}
+.settings{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 0 4px}
+.settings label{display:flex; flex-direction:column; gap:3px; color:var(--muted); font-size:.85rem}
+.demo{
+  margin-top:8px; width:max-content; max-width:100%; font-size:.85rem; border-radius:8px;
+  padding:3px 10px; background:var(--warn-bg); color:var(--warn);
+}
+.demo[hidden]{display:none}
+.settings input,.settings select{
+  font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); color:var(--ink); direction:ltr; text-align:left;
+}
+.settings .row{grid-column:1/-1; display:flex; align-items:center; gap:10px; color:var(--muted)}
+button{font:inherit; cursor:pointer}
+.ghost{background:none; border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:5px 12px}
+.ghost:hover{border-color:var(--brand)}
+:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+#log{flex:1; overflow-y:auto; padding:16px 0; display:flex; flex-direction:column; gap:14px}
+.empty{margin:auto; text-align:center; max-width:460px; color:var(--muted)}
+.empty h2{margin:0 0 6px; font-size:1.15rem; color:var(--ink); font-weight:600}
+.chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px}
+.chips button{
+  background:var(--surface); border:1px solid var(--line); color:var(--ink);
+  border-radius:999px; padding:6px 14px; font-size:.92rem;
+}
+.chips button:hover{border-color:var(--brand)}
+
+.wrap{display:flex; flex-direction:column; gap:6px; max-width:88%}
+.wrap.user{align-self:flex-start}
+.wrap.bot{align-self:flex-end}
+.bubble{padding:10px 14px; border-radius:14px; overflow-wrap:anywhere}
+.user .bubble{background:var(--user); border-end-start-radius:4px}
+.bot .bubble{background:var(--surface); border:1px solid var(--line); border-end-end-radius:4px}
+.bubble p{margin:0}
+.bubble p + p, .bubble p + .tw, .tw + p{margin-top:8px}
+.bubble{white-space:pre-line}
+.tw{overflow-x:auto; white-space:normal}
+.bubble table{border-collapse:collapse; font-size:.92rem; min-width:100%}
+.bubble th,.bubble td{border:1px solid var(--line); padding:4px 10px; text-align:start}
+.bubble th{background:var(--bg)}
+.meta{display:flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:.8rem; color:var(--muted)}
+.tool{
+  direction:ltr; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.78rem;
+  border:1px solid var(--line); border-radius:6px; padding:0 7px; background:var(--surface); color:var(--ink);
+}
+.pending{
+  background:var(--warn-bg); color:var(--warn); border-inline-start:4px solid var(--warn);
+  border-radius:8px; padding:8px 12px; font-size:.92rem;
+}
+.pending strong{display:block}
+.pending ul{margin:4px 0 0; padding-inline-start:18px}
+.pending code{direction:ltr; unicode-bidi:isolate; font-size:.8rem; overflow-wrap:anywhere}
+.error{background:var(--err-bg); color:var(--err); border-radius:10px; padding:9px 14px; font-size:.93rem; align-self:stretch}
+.dots{display:inline-flex; gap:5px; padding:4px 0}
+.dots i{width:7px; height:7px; border-radius:50%; background:var(--muted); animation:b 1s infinite ease-in-out}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.dots i{animation:none; opacity:.6}}
+
+form{display:flex; gap:8px; align-items:flex-end; padding:10px 0 16px; border-top:1px solid var(--line)}
+textarea{
+  flex:1; font:inherit; resize:none; max-height:140px; padding:9px 12px;
+  border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink);
+}
+#send{
+  background:var(--brand); color:var(--brand-ink); border:0; border-radius:12px;
+  padding:10px 20px; font-weight:600;
+}
+#send:disabled{opacity:.5; cursor:default}
+@media (max-width:520px){ .settings{grid-template-columns:1fr} .wrap{max-width:96%} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="top">
+      <h1>رفيق</h1>
+      <button class="ghost" id="new" type="button">جلسة جديدة</button>
+    </div>
+    <p>مساعد بلدية مدار لتصاريح البناء والترميم واللوحات وعربات الطعام والفعاليات</p>
+    <div class="demo" id="demoBanner">وضع تجريبي: ردود جاهزة، لا يوجد نموذج متصل</div>
+    <details>
+      <summary>الإعدادات</summary>
+      <div class="settings">
+        <label>الوضع
+          <select id="mode">
+            <option value="demo">تجريبي (يعمل بدون أي خدمة)</option>
+            <option value="live">الخدمة الحية (Rafeeq API)</option>
+          </select>
+        </label>
+        <label>مفتاح API<input id="key" value="dev-key-1" autocomplete="off"></label>
+        <label>عنوان الخدمة (اتركه فارغاً إذا فتحت الصفحة من الخدمة نفسها)<input id="base" placeholder="http://127.0.0.1:8793" autocomplete="off"></label>
+        <div class="row">رقم الجلسة: <code id="sid"></code></div>
+      </div>
+    </details>
+  </header>
+
+  <main id="log" role="log" aria-live="polite" aria-label="المحادثة"></main>
+
+  <form id="form">
+    <textarea id="text" rows="1" placeholder="اكتب سؤالك عن التصاريح" aria-label="رسالتك" maxlength="4000"></textarea>
+    <button id="send" type="submit">إرسال</button>
+  </form>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const log = $("#log"), form = $("#form"), input = $("#text"), sendBtn = $("#send");
+let sessionId = newId(), busy = false;
+
+const SUGGESTIONS = [
+  "كم رسوم لوحة مضاءة مساحتها 3 متر مربع؟",
+  "ما هي ساعات عمل المكتب؟",
+  "What is the status of permit BLD-20417?",
+  "أبغى أحجز فحص صحي لعربة الطعام FTR-30311"
+];
+
+function newId(){ return "web-" + Math.random().toString(36).slice(2, 10).padEnd(8, "0"); }
+
+function el(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function showEmpty(){
+  log.replaceChildren();
+  const box = el("div", "empty");
+  box.append(el("h2", "", "اسأل رفيق عن تصريحك"));
+  box.append(el("div", "", "يجيب من سياسات البلدية، ويحسب الرسوم، ويتحقق من هويتك قبل أي معلومة عن طلبك."));
+  const chips = el("div", "chips");
+  SUGGESTIONS.forEach(t => {
+    const b = el("button", "", t); b.type = "button";
+    b.addEventListener("click", () => send(t));
+    chips.append(b);
+  });
+  box.append(chips);
+  log.append(box);
+  $("#sid").textContent = sessionId;
+}
+
+function scrollDown(){ log.scrollTop = log.scrollHeight; }
+function clearEmpty(){ const e = log.querySelector(".empty"); if (e) e.remove(); }
+
+/* text with **bold** and markdown tables, built with DOM nodes (no innerHTML) */
+function inline(p, t){
+  t.split("**").forEach((part, k) => {
+    if (!part) return;
+    if (k % 2) p.append(el("strong", "", part)); else p.append(document.createTextNode(part));
+  });
+}
+function table(rows){
+  const body = rows.filter(r => !(/^\|?[\s:|-]+\|?$/.test(r) && r.includes("-")));
+  const t = document.createElement("table");
+  body.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    r.replace(/^\||\|$/g, "").split("|").forEach(c => {
+      const cell = document.createElement(i === 0 ? "th" : "td");
+      inline(cell, c.trim()); tr.append(cell);
+    });
+    t.append(tr);
+  });
+  const w = el("div", "tw"); w.append(t); return w;
+}
+function renderText(root, text){
+  const lines = text.split("\n"); let i = 0;
+  while (i < lines.length){
+    if (lines[i].trim().startsWith("|")){
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) rows.push(lines[i++].trim());
+      root.append(table(rows));
+    } else {
+      const chunk = [];
+      while (i < lines.length && !lines[i].trim().startsWith("|") && lines[i].trim() !== "") chunk.push(lines[i++]);
+      if (chunk.length){ const p = document.createElement("p"); inline(p, chunk.join("\n")); root.append(p); }
+      else i++;
+    }
+  }
+}
+
+function addUser(text){
+  clearEmpty();
+  const w = el("div", "wrap user"), b = el("div", "bubble"); b.dir = "auto"; b.textContent = text;
+  w.append(b); log.append(w); scrollDown();
+}
+function addTyping(){
+  clearEmpty();
+  const w = el("div", "wrap bot"), b = el("div", "bubble"), d = el("span", "dots");
+  d.setAttribute("aria-label", "رفيق يكتب");
+  d.append(el("i"), el("i"), el("i")); b.append(d); w.append(b); log.append(w); scrollDown();
+  return w;
+}
+function addError(msg){ log.append(el("div", "error", msg)); scrollDown(); }
+
+function addReply(d){
+  const w = el("div", "wrap bot"), b = el("div", "bubble"); b.dir = "auto";
+  renderText(b, d.reply || ""); w.append(b);
+
+  if (d.pending_actions && d.pending_actions.length){
+    const p = el("div", "pending");
+    p.append(el("strong", "", "بانتظار موافقة الموظف"));
+    p.append(document.createTextNode("لم يُنفَّذ أي تغيير بعد. سيراجع الموظف الطلبات التالية:"));
+    const ul = document.createElement("ul");
+    d.pending_actions.forEach(a => {
+      const li = document.createElement("li");
+      li.append(el("code", "", a.tool + " " + JSON.stringify(a.args)));
+      ul.append(li);
+    });
+    p.append(ul); w.append(p);
+  }
+
+  const m = el("div", "meta");
+  (d.tools || []).forEach(t => m.append(el("span", "tool", t)));
+  if (d.tokens){
+    m.append(el("span", "", "التوكنز: مدخل " + (d.tokens.input ?? 0) + "، مخرج " + (d.tokens.output ?? 0) + "، خطوات " + (d.model_steps ?? 0)));
+  }
+  if (m.childNodes.length) w.append(m);
+  log.append(w); scrollDown();
+}
+
+function errorText(status, data){
+  if (status === 401) return "مفتاح API غير صحيح. عدّله من الإعدادات.";
+  if (status === 422) return "الرسالة غير صالحة: يجب ألا تكون فارغة ولا تتجاوز 4000 حرف.";
+  if (status === 429) return "انتهى حد التوكنز لهذه الجلسة. اضغط «جلسة جديدة» للمتابعة.";
+  if (status >= 500) return "تعذر على الخدمة الوصول إلى النموذج، وغالباً السبب حد الطلبات المجاني. انتظر قليلاً ثم أعد المحاولة.";
+  const detail = data && typeof data.detail === "string" ? " " + data.detail : "";
+  return "تعذر إكمال الطلب (رمز " + status + ")." + detail;
+}
+
+/* Demo mode: scripted replies that mirror what Rafeeq returned in testing. No model, no server. */
+const HAS_AR = s => /[\u0600-\u06FF]/.test(s);
+const FEES = {"3-1": 750, "5-0": 1000, "2-1": 500, "8-0": 1600};
+let awaitingBook = false;
+
+function out(reply, tools = [], pending = []){ return {reply, tools, pending_actions: pending}; }
+
+function demoLogic(t){
+  const ar = HAS_AR(t);
+  if (awaitingBook && /(أؤكد|اؤكد|تأكيد|نعم|تفضل|confirm|yes|go ahead)/i.test(t)){
+    awaitingBook = false;
+    return out(ar
+      ? "سجلت طلب الحجز: **الأربعاء 4 نوفمبر 2026 الساعة 09:00** لتصريح FTR-30311. سيراجعه الموظف ويؤكده."
+      : "Booking request recorded: **Wednesday 4 November 2026, 09:00** for FTR-30311. An officer will review and confirm it.",
+      [], [{tool: "book_inspection", args: {permit_id: "FTR-30311", slot: "2026-11-04 09:00"}}]);
+  }
+  if (/(حجز|book)/i.test(t) && /(فحص|inspection)/i.test(t)){
+    awaitingBook = true;
+    return out(ar
+      ? "أقرب موعد متاح قبل الظهر هو **الأربعاء 4 نوفمبر 2026 الساعة 09:00** لتصريح FTR-30311 (POL-05).\n\nأنا على وشك تقديم طلب الحجز. هل تؤكد؟"
+      : "The earliest morning slot is **Wednesday 4 November 2026, 09:00** for FTR-30311 (POL-05).\n\nI'm about to submit the booking request. Do you confirm?",
+      ["get_permit", "list_slots"]);
+  }
+  if (/(رسوم|fee)/i.test(t) && /(لوحة|sign)/i.test(t)){
+    const digits = t.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    const m2 = (digits.match(/(\d+)\s*(م|m|متر)/i) || [])[1];
+    const lit = /(مضاءة|مضيئة|illuminated)/i.test(t) && !/(غير مضاءة|غير مضيئة|بدون|non|without)/i.test(t) ? 1 : 0;
+    const fee = FEES[m2 + "-" + lit];
+    if (fee) return out(ar
+      ? "رسوم لوحة " + (lit ? "مضاءة" : "غير مضاءة") + " مساحتها " + m2 + " متر مربع: **" + fee + " ريال** (POL-02)."
+      : "The fee for a " + m2 + " m² " + (lit ? "illuminated" : "non-illuminated") + " sign is **" + fee + " SAR** (POL-02).",
+      ["compute_fee"]);
+  }
+  if (/(ساعات|دوام|hours|open)/i.test(t)){
+    return out(ar
+      ? "ساعات عمل المكتب من 07:30 إلى 14:30 بتوقيت الرياض، وأيام العمل من الأحد إلى الخميس. الجمعة والسبت عطلة نهاية الأسبوع (POL-03)."
+      : "Office hours are 07:30 to 14:30 Riyadh time, Sunday to Thursday. Friday and Saturday are the weekend (POL-03).",
+      ["search_policies"]);
+  }
+  if (/(withdraw|سحب|اسحب)/i.test(t)){
+    return out(ar
+      ? "**يعتمد على حالة طلبك** (POL-06)\n\n| حالة الطلب عند السحب | المسترد |\n|---|---|\n| قبل المراجعة | الرسوم كاملة |\n| أثناء المراجعة | 50% من الرسوم |\n\nلمعرفة حالة طلبك بالتحديد، أحتاج آخر 4 أرقام من هويتك والجوال المسجل (POL-08)."
+      : "**It depends on your application's status** (POL-06)\n\n| Status when withdrawn | Refund |\n|---|---|\n| Before review | Full fee |\n| During review | 50% of the fee |\n\nTo check your specific application, I need the last 4 digits of your national ID and your registered mobile (POL-08).",
+      ["search_policies"]);
+  }
+  if (/(status|حالة)/i.test(t) || /[A-Z]{3}-\d{4,}/.test(t)){
+    return out(ar
+      ? "لا أستطيع مشاركة تفاصيل الطلب قبل التحقق من هويتك (POL-08). أرسل لي:\n1. آخر 4 أرقام من الهوية الوطنية\n2. رقم الجوال المسجل في الطلب"
+      : "I can't share permit details until I verify your identity (POL-08). Please send:\n1. The last 4 digits of your national ID\n2. The mobile number registered on the application");
+  }
+  return out(ar
+    ? "هذا وضع تجريبي بردود جاهزة. جرّب أحد الأسئلة المقترحة، أو اختر «الخدمة الحية» من الإعدادات للاتصال بالنموذج."
+    : "This is demo mode with scripted replies. Try one of the suggested questions, or pick \"Live service\" in Settings to connect the model.");
+}
+
+const demoReply = t => new Promise(r => setTimeout(() => r(demoLogic(t)), 700));
+
+function syncMode(){ $("#demoBanner").hidden = $("#mode").value !== "demo"; }
+$("#mode").addEventListener("change", syncMode);
+/* served by the Rafeeq API (http/https) → talk to the real model; opened as a local file → demo mode */
+if (location.protocol.startsWith("http")) $("#mode").value = "live";
+syncMode();
+
+async function send(text){
+  text = (text || "").trim();
+  if (busy || !text) return;
+  busy = true; sendBtn.disabled = true;
+  addUser(text);
+  input.value = ""; resize();
+  const wait = addTyping();
+  try{
+    if ($("#mode").value === "demo"){
+      const d = await demoReply(text);
+      wait.remove(); addReply(d);
+      return;
+    }
+    const base = $("#base").value.trim().replace(/\/+$/, "");
+    const res = await fetch(base + "/v1/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-API-Key": $("#key").value.trim()},
+      body: JSON.stringify({session_id: sessionId, message: text})
+    });
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    wait.remove();
+    if (res.ok && data) addReply(data); else addError(errorText(res.status, data));
+  } catch (e){
+    wait.remove();
+    addError("تعذر الوصول إلى الخدمة. تأكد أنها تعمل وأن عنوانها في الإعدادات صحيح.");
+  } finally {
+    busy = false; sendBtn.disabled = false; input.focus();
+  }
+}
+
+function resize(){ input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
+input.addEventListener("input", resize);
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); form.requestSubmit(); }
+});
+form.addEventListener("submit", e => { e.preventDefault(); send(input.value); });
+$("#new").addEventListener("click", () => { sessionId = newId(); showEmpty(); input.focus(); });
+
+showEmpty();
+</script>
+</body>
+</html>
